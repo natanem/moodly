@@ -1,6 +1,6 @@
 import User from "../models/User.js"
 
-export const getProfile = async(req, res) => {
+export const getProfile = async(req, res, next) => {
     try {
         const user = await User.findById(req.user).select("-password")
     
@@ -10,12 +10,12 @@ export const getProfile = async(req, res) => {
         res.send(user)
     } 
         catch (error) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
     
 }
 
-export const updateProfile = async(req, res) => {
+export const updateProfile = async(req, res, next) => {
     try {
         const user = await User.findByIdAndUpdate(req.user, req.body, {new: true})
     
@@ -26,10 +26,10 @@ export const updateProfile = async(req, res) => {
         res.status(200).json({ message: "Profile updated successfully", user });
     } 
         catch (error) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
 }
-export const deleteProfile = async(req, res) => {
+export const deleteProfile = async(req, res, next) => {
     try {
         const user = await User.findByIdAndDelete(req.user)
     
@@ -40,6 +40,6 @@ export const deleteProfile = async(req, res) => {
         res.status(200).json({ message: "Profile deleted successfully", user });
     } 
         catch (error) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
 }

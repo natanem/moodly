@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 
 import User from "../models/User.js";
 import { login, register } from "../controllers/Auth.js";
+import { userValidation, validate } from "../middlewares/Validator.js";
 
 const router = Router();
 
@@ -13,8 +14,7 @@ const authLimiter = rateLimit({
 });
 
 
-router.post("/register", register );
-
+router.post("/register", userValidation, validate,register );
 router.post("/login", authLimiter, login);
 
 export default router;

@@ -6,22 +6,50 @@ const userSchema = new Schema({
     username: {
         type: String,
         required: true,
-        unique: true
+        unique: true, trim: true,
     },
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true, lowercase: true,
     },
     password: {
         type: String,
         required: true,
-    },
+    },bio: { type: String, maxLength: 150 },
+    profilePicture: { type: String, default: null },
+    coverPhoto: { type: String, default: null },
+    followers: [{type: Schema.Types.ObjectId, ref: "User"}],
+    following: [{type: Schema.Types.ObjectId, ref: "User"}],
+    isVerified: { type: Boolean, default: false },
+    notifications: {
+        email: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
+    },      bio: { type: String, maxLength: 150 },
+    location: { type: String, default: null }, // City, country, etc.
+    dob: { type: Date, default: null }, // Date of birth,
+    postsCount: { type: Number, default: 0 }, // Count of user's posts
+    badges: [{ type: String }], // Array of badge names/IDs
+    // isAdmin: { type: Boolean, default: false },
+    isPrivate: { type: Boolean, default: false }, // For private accounts
     
 }, {timestamps: true})
 
 // Middleware: Hash the plain password using Bcryptjs
 userSchema.pre("save", async function(next){
+
+
+        if (this.dob) {
+            const ageDiffMs = Date.now() - new Date(this.dob).getTime();
+            const ageDate = new Date(ageDiffMs);
+            const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+    
+            if (age < 13) {
+                return next(new Error('User must be at least 13 years old.'));
+            }
+        }
+       
+    
     if(!this.isModified("password")) return next()
 
     this.password = await bcrypt.hash(this.password, 12)
@@ -39,6 +67,11 @@ userSchema.methods.generateToken =  function() {
     return  jwt.sign({id: this.id}, process.env.JWT_SECRET, {expiresIn: "1h"})
      
 }
+
+userSchema.methods.updateLastActive = function () {
+    this.lastActive = Date.now();
+    return this.save();
+};
 
 // Statics: Finding user by credentials
 userSchema.statics.findUserByCredentials = async function(identifier, password) {

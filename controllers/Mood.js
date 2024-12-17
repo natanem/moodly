@@ -1,6 +1,8 @@
 import Mood from "../models/Mood.js"
+import { validationResult } from "express-validator"
+import { moodValidation } from "../middlewares/Validator.js"
 
-export const  getAllMoods = async(req, res) => {
+export const  getAllMoods = async(req, res, next) => {
     try {
      const moods = await Mood.find()
      res.send(moods)
@@ -10,7 +12,7 @@ export const  getAllMoods = async(req, res) => {
  }
 
 
- export const getMoodsByUser = async(req, res) => {
+ export const getMoodsByUser = async(req, res, next) => {
     try {
      const moods = await Mood.findMoodsByUser(req.user)
      res.send(moods)
@@ -19,7 +21,7 @@ export const  getAllMoods = async(req, res) => {
     }
  }
 
- export const getMood = async(req, res) => {
+ export const getMood = async(req, res, next) => {
     try {
         const {id} = req.params
         const foundMood = await Mood.findById(id)
@@ -27,12 +29,12 @@ export const  getAllMoods = async(req, res) => {
            return res.status(404).json({message: "Mood not found"})
         }
         res.send(foundMood)
-    } catch (error) {
-        res.status(500).json({message: "Server Error"})
+    } catch(error) {
+        next(error)
     }
 }
 
-export const updateMood = async(req, res) => {
+export const updateMood = async(req, res, next) => {
     try {
         const {id} = req.params
         const updated = await Mood.findByIdAndUpdate(id, req.body, {new: true})
@@ -40,11 +42,11 @@ export const updateMood = async(req, res) => {
             return res.status(404).json({message: "Mood not found"})
         }
         res.send(updated)
-    } catch (error) {
-        res.status(500).json({message: "Server Error"})
+    } catch(error) {
+        next(error)
     }
 }
-export const deleteMood = async(req, res) => {
+export const deleteMood = async(req, res, next) => {
     try {
         const {id} = req.params
         const deleted = await Mood.findByIdAndDelete(id)
@@ -52,18 +54,19 @@ export const deleteMood = async(req, res) => {
             return res.status(404).json({message: "Mood not found"})
         }
         res.send({message: "Mood deleted", id: deleted.id})
-    } catch (error) {
-        res.status(500).json({message: "Server Error"})
+    } catch(error) {
+        next(error)
     }
 }
-export const createMood = async (req, res) => {
+export const createMood = async (req, res, next) => {
+
     try {
         // const {user, mood, note} = req.body
         const newMood = new Mood(req.body)
         newMood.user = req.user
         await newMood.save()
         res.status(201).send(newMood)
-    } catch (error) {
-        res.status(500).json({message: "Server Error"})
+    } catch(error) {
+        next(error)
     }
 }

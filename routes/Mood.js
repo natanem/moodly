@@ -1,6 +1,7 @@
 import express, {Router} from "express"
 import Mood from "../models/Mood.js"
 import { getAllMoods, getMoodsByUser, updateMood, deleteMood, getMood, createMood } from "../controllers/Mood.js"
+import { moodValidation, validate } from "../middlewares/Validator.js"
 
 const router = Router()
 
@@ -14,6 +15,6 @@ router.put("/:id", updateMood)
 router.delete("/:id", deleteMood)
 
 //POST: Adding a new Mood
-router.post("/", createMood)
+router.post("/", moodValidation, validate,createMood)
 
 export default router
