@@ -11,7 +11,7 @@ export const userValidation = [
 export const moodValidation = [
     check('text').isLength({ max: 500 }).withMessage('Text cannot exceed 500 characters'),
     check('image').optional().isURL().withMessage('Invalid image URL'),
-    check('visibility').isIn(['public', 'private', 'friends']).withMessage('Invalid visibility'),
+    check('visibility').optional().isIn(['public', 'private', 'friends']).withMessage('Invalid visibility'),
 ];
 
 export const validate = (req, res, next) => {

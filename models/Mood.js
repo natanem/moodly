@@ -1,5 +1,13 @@
 import mongoose, {Schema, model} from "mongoose";
 
+const commentSchema = new Schema({
+    user: {type: Schema.Types.ObjectId, ref: "User", required: true},
+    text: {type: String, required: [true, "comment text is required"]},
+    createdAt: {type: Date, default: Date.now}
+})
+
+const Comment = model("Comment", commentSchema)
+
 
 const moodSchema = new Schema({
     user: {type: Schema.Types.ObjectId, ref: "User", required: true},
@@ -7,16 +15,15 @@ const moodSchema = new Schema({
     image: {type: String, default: null},
     tags: [{type: String}],
     likes: [{type: Schema.Types.ObjectId, ref: "User"}],
-    comment: {
-        user: {type: Schema.Types.ObjectId, ref: "User", required: true},
-        text: {type: String, required: [true, "comment text is required"]},
-        createdAt: {type: Date, default: Date.now()}
-    },
+    comments: [{type: Schema.Types.ObjectId, ref: "Comment"}],
     visibility: {
-        type: String, enum: ["public", "private", "friends"], default: "public"
+        type: String, 
+        enum: ["public", "private", "friends"], 
+        default: "public"
     },
     location: {
-        type:String, default: null
+        type:String,
+        default: null
     },
     likeCount: {type: Number, default: 0},
     commentCount: {type: Number, default: 0}
