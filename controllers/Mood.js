@@ -5,10 +5,61 @@ import { moodValidation } from "../middlewares/Validator.js";
 
 export const getAllMoods = async (req, res, next) => {
   try {
-    const moods = await Mood.find();
-    res.send(moods);
+    const {
+      tag,
+      startDate,
+      endDate,
+      visibility,
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const skip = (page - 1) * limit;
+    const filters = {};
+
+    // Filter by tag (if provided)
+    if (tag) filters.tags = { $in: [tag] };
+    // if (req.query.tags) filters.tags = { $in: req.query.tags.split(',') };
+
+    // Filter by date range (if provided)
+    if (startDate && endDate) {
+      filters.createdAt = {
+        $gte: new Date(startDate), // start date
+        $lte: new Date(endDate), // end date
+      };
+    }
+    if (visibility) filters.visibility = visibility;
+
+    // Total moods count for pagination
+    const totalMoods = await Mood.countDocuments({});
+
+    const moodsFeed = await Mood.find({ ...filters })
+      .select("text tags createdAt likes comments")
+      .populate("user", "username profilePicture")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Add metadata to moods
+    const enrichedFeed = moodsFeed.map((mood) => ({
+      ...mood.toObject(),
+      totalLikes: mood.likes.length,
+      totalComments: mood.comments.length,
+    }));
+
+    res.json({
+      status: "success",
+      data: {
+        moods: enrichedFeed,
+        metadata: {
+          totalMoods,
+          page,
+          limit,
+        },
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    next(error);
   }
 };
 
@@ -47,7 +98,7 @@ export const getMoodsByUser = async (req, res, next) => {
       .skip((page - 1) * pageSize)
       .limit(Number(pageSize))
       .sort({ createdAt: -1 })
-      .populate("user", "username profilePic");
+      .populate("user", "username profilePicture");
     res.json({
       data: {
         moods,
@@ -109,7 +160,7 @@ export const getMoodFeeds = async (req, res, next) => {
       ...filters,
     })
       .select("text tags createdAt likes comments")
-      .populate("user", "username profilePic")
+      .populate("user", "username profilePicture")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -117,7 +168,7 @@ export const getMoodFeeds = async (req, res, next) => {
     // Add metadata to moods
     const enrichedFeed = moodsFeed.map((mood) => ({
       ...mood.toObject(),
-      likedByUser: mood.likes.includes(req.user._id),
+      likedByUser: mood.likes.includes(req.user),
       totalLikes: mood.likes.length,
       totalComments: mood.comments.length,
     }));
@@ -187,7 +238,7 @@ export const createMood = async (req, res, next) => {
   }
 };
 
-export const toggleLike = async (req, res, next) => {
+export const like = async (req, res, next) => {
   try {
     const { id } = req.params;
     const mood = await Mood.findById(id);
@@ -258,7 +309,7 @@ export const toggleLike = async (req, res, next) => {
 // }
 
 // const moodsFeed = await Mood.find({ user: { $in: followingIds }, ...filters })
-//     .populate('user', 'username profilePic')
+//     .populate('user', 'username profilePicture')
 //     .sort(sortOrder)
 //     .skip(skip)
 //     .limit(limit);
